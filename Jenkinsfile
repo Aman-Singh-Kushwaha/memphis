@@ -2,7 +2,7 @@ String unique_id = org.apache.commons.lang.RandomStringUtils.random(4, false, tr
 pipeline {
   environment {
       versionTag="./version.conf"
-      gitBranch = env.BRANCH_NAME
+      gitBranch = ${env.BRANCH_NAME}
       imageName = "memphis"
       repoUrlPrefix = "memphisos"
       test_suffix = "test"
