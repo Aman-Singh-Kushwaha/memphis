@@ -1,7 +1,7 @@
 String unique_id = org.apache.commons.lang.RandomStringUtils.random(4, false, true)
 pipeline {
   environment {
-      versionTag= "./version.conf"
+      versionTag= readFile('./version.conf')
       gitBranch = "${env.BRANCH_NAME}"
       imageName = "memphis"
       repoUrlPrefix = "memphisos"
@@ -34,7 +34,6 @@ pipeline {
       steps {
         sh """
           kubectl config use-context minikube
-	  kubectl create namespace $versionTag
           kubectl create namespace memphis-$unique_id --dry-run=client -o yaml | kubectl apply -f -
           aws s3 cp s3://memphis-jenkins-backup-bucket/regcred.yaml .
           kubectl apply -f regcred.yaml -n memphis-$unique_id
