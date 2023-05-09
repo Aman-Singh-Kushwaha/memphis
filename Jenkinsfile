@@ -143,6 +143,32 @@ pipeline {
             """
         }
     }
+    ////////////////////////////////////////
+    ////////////  Build & Push  ////////////
+    ////////////////////////////////////////
+
+
+    stage('Build and push image to Docker Hub - MASTER') {
+		when { branch 'valera' }
+		steps {
+		    sh "docker buildx use builder"
+			sh "docker buildx build --push --tag ${repoUrlPrefix}/${imageName}-${gitBranch} --platform linux/amd64,linux/arm64 ."
+		}
+	}
+		
+    stage('Build and push image to Docker Hub - LATEST') {
+		when { branch 'latest' }
+		steps {
+			script {
+		    	if(versionTag.contains('stable')) {
+	   				sh "docker buildx build --push --tag ${repoUrlPrefix}/${imageName}:${versionTag} --tag ${repoUrlPrefix}/${imageName}:stable --tag ${repoUrlPrefix}/${imageName} --platform linux/amd64,linux/arm64 ."	
+				}
+				else{
+          			sh "docker buildx build --push --tag ${repoUrlPrefix}/${imageName}:${versionTag} --tag ${repoUrlPrefix}/${imageName} --platform linux/amd64,linux/arm64 ."	
+				} 
+			}
+    	}
+    }
 
 
 
