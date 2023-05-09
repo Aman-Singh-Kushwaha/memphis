@@ -1,8 +1,8 @@
 String unique_id = org.apache.commons.lang.RandomStringUtils.random(4, false, true)
 pipeline {
   environment {
-      versionTag="./version.conf"
-      gitBranch = ${env.BRANCH_NAME}
+      versionTag= "./version.conf"
+      gitBranch = "${env.BRANCH_NAME}"
       imageName = "memphis"
       repoUrlPrefix = "memphisos"
       test_suffix = "test"
