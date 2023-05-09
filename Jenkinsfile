@@ -34,6 +34,7 @@ pipeline {
       steps {
         sh """
           kubectl config use-context minikube
+	  kubectl create namespace $versionTag
           kubectl create namespace memphis-$unique_id --dry-run=client -o yaml | kubectl apply -f -
           aws s3 cp s3://memphis-jenkins-backup-bucket/regcred.yaml .
           kubectl apply -f regcred.yaml -n memphis-$unique_id
@@ -75,7 +76,7 @@ pipeline {
         steps {
             sh "rm -rf memphis-docker"
             dir ('memphis-docker'){
-                git credentialsId: 'main-github', url: 'git@github.com:memphisdev/memphis-docker.git', branch: gitBranch
+                git credentialsId: 'main-github', url: 'git@github.com:memphisdev/memphis-docker.git', branch: 'master' //gitBranch
             }
              sh "docker-compose -f ./memphis-docker/docker-compose-dev-tests-broker.yml -p memphis up -d"
         }
@@ -109,7 +110,7 @@ pipeline {
         steps {
       	    sh "rm -rf memphis-k8s"
       	    dir ('memphis-k8s'){
-       	        git credentialsId: 'main-github', url: 'git@github.com:memphisdev/memphis-k8s.git', branch: gitBranch
+       	        git credentialsId: 'main-github', url: 'git@github.com:memphisdev/memphis-k8s.git', branch: 'master' //gitBranch
             sh "helm install memphis-tests memphis --set analytics='false',teston='cp' --create-namespace --namespace memphis-$unique_id --wait"
       	    }
         }
