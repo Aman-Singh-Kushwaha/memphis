@@ -170,6 +170,58 @@ pipeline {
     	}
     }
 
+    //////////////////////////////////////
+    //////////////  MASTER  //////////////
+    //////////////////////////////////////
+
+    stage('MASTER'){
+        when { branch 'valera' }
+        stages {
+            stage('Push to staging') {
+                steps {
+	                sh """
+            	        aws eks --region eu-central-1 update-kubeconfig --name staging-cluster
+                        helm uninstall my-memphis --kubeconfig ~/.kube/config -n memphis
+	                    kubectl get pvc -n memphis | grep -v NAME| awk '{print\$1}' | while read vol; do kubectl delete pvc \$vol -n memphis; done
+	                """
+	                dir ('memphis-k8s'){
+       	                git credentialsId: 'main-github', url: 'git@github.com:memphisdev/memphis-k8s.git', branch: 'master' //gitBranch
+	                    sh 'helm install my-memphis memphis --set analytics="false",global.cluster.enabled="true",exporter.enabled="true",websocket.tls.cert="tls.crt",websocket.tls.key="tls.key",websocket.tls.secret.name="ws-tls-certs" --create-namespace --namespace memphis --wait'
+	                }
+                    sh "rm -rf memphis-k8s"
+
+                    sh """
+	                    until kubectl get pods --selector=app.kubernetes.io/name=memphis -o=jsonpath="{.items[*].status.phase}" -n memphis  | grep -q "Running" ; do sleep 1; done
+     	                nohup kubectl port-forward service/memphis 6666:6666 9000:9000 7770:7770 --namespace memphis &
+	                   """
+                }
+            }
+            stage('Run tests') {
+                steps {
+                    sh """
+	                    npm install --prefix ./memphis-e2e-tests
+                        node ./memphis-e2e-tests/index.js kubernetes memphis
+	                """
+                }
+            }
+            stage('Create staging user') {
+                steps {
+                    sh """
+                        sudo npm i memphis-dev-cli -g
+   	                    mem connect -s localhost -u root -p \$(kubectl get secret memphis-creds  -n memphis -o jsonpath="{.data.ROOT_PASSWORD}" | base64 --decode)
+   	                    mem user add -u staging -p memphis
+   	                """
+   	            }
+            }
+            stage('Remove test resources') {
+    	        steps {
+                    sh(script: """/usr/sbin/lsof -i :6666,9000 | grep kubectl | awk '{print \"kill -9 \"\$2}' | sh""", returnStdout: true)
+       	            sh "rm -rf memphis-e2e-tests"
+    	        }
+            }
+            
+        }
+    }
 
 
   }
