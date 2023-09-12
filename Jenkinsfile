@@ -7,10 +7,10 @@ pipeline {
       repoUrlPrefix = "memphisos"
       test_suffix = "test"
   }
-/*
-  triggers {
-    cron('H */4 * * 1-5')
-  }*/
+
+//  triggers {
+//    cron('H */4 * * 1-5')
+//  }
   agent {label 'spot-agents' }
 
   stages {
